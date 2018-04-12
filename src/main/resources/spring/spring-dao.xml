@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+    <!--数据源-->
+    <context:property-placeholder location="classpath:jdbc.properties" />
+    <!--数据库连接池-->
+    <bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource">
+        <property name="driverClass" value="${driver}"/>
+        <property name="jdbcUrl" value="${url}"/>
+        <property name="user" value="${username}"/>
+        <property name="password" value="${password}"/>
+        <!--连接池属性-->
+        <property name="maxPoolSize" value="30"/>
+        <property name="minPoolSize" value="10"/>
+        <!--关闭连接时不自动提交事务-->
+        <property name="autoCommitOnClose" value="false"/>
+        <!--当连接数满时等待连接的超时时间-->
+        <property name="checkoutTimeout" value="1000"/>
+        <!--重试次数-->
+        <property name="acquireRetryAttempts" value="2"/>
+    </bean>
+    <!--配置sqlSessionFactory-->
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <!--注入连接池-->
+        <property name="dataSource" ref="dataSource"/>
+        <!--mybatis全局配置文件-->
+        <property name="configLocation" value="classpath:mybatis-config.xml"/>
+        <!-- 扫描entity包使用别名  多个加：号-->
+        <property name="typeAliasesPackage" value="org.seckill.entity"/>
+        <!-- 扫描sql配置文件需要的xml文件-->
+        <property name="mapperLocations" value="classpath:mapper/*.xml"/>
+    </bean>
+    <!--配置扫描DAO接口包  并注入Spring容器-->
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <!--注入sqlSessionFactory 防止提前初始化sqlSessionFactory-->
+        <property name="sqlSessionFactoryBeanName" value="sqlSessionFactory"/>
+        <!--扫描需要的接口DAO包-->
+        <property name="basePackage" value="org.seckill.dao"/>
+    </bean>
+
+    <!--注入redis dao-->
+    <bean id="redisDAO" class="org.seckill.dao.cache.RedisDAO" >
+        <constructor-arg index="0" value="localhost"/>
+        <constructor-arg index="1" value="6379"/>
+    </bean>
+</beans>
